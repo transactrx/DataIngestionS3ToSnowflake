@@ -8,17 +8,13 @@ resource "snowflake_stream" "pwl_transactions_stream" {
   
   append_only = true
   insert_only = false
-
-  depends_on = [
-    snowflake_table.pwl_transactions
-  ]
 }
 
 resource "snowflake_task" "after_stream_task" {
   name      = var.after_stream_task
   database  = var.database_name
   schema    = var.schema_name
-  warehouse = vart.warehouse_name
+  warehouse = var.warehouse_name
 
   user_task_timeout_ms = "3600000" # 1 hour
   comment   = "Load powerline data from external stage to table every hour."
@@ -29,9 +25,4 @@ resource "snowflake_task" "after_stream_task" {
   sql_statement = <<-EOS
     ${var.sql_import_query}
   EOS
-
-  depends_on = [
-    snowflake_procedure.pwl_data_load_sp,
-    snowflake_warehouse.data_load_warehouse
-  ]
 }
