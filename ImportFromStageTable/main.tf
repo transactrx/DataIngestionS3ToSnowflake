@@ -4,7 +4,7 @@ resource "snowflake_stream" "pwl_transactions_stream" {
   schema      = var.schema_name
   comment     = "Stream for changes to powerline transactions source table"
   
-  on_table    = "${var.database_name}.${var.schema_name}.${var.table_name}"
+  on_table    = "${var.database_name}.${var.schema_name}.${var.stage_table_name}"
   
   append_only = true
   insert_only = false

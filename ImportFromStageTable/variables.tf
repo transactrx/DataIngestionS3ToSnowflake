@@ -46,6 +46,11 @@ variable "data_load_task" {
   type        = string
 }
 
+variable "stage_table_name" {
+  description = "The name of the Snowflake stage/source table where external data was loaded."
+  type        = string
+}
+
 variable "stage_table_stream_name" {
   description = "The name of the Snowflake stream that will get populated with changes from the Stage table."
   type        = string
