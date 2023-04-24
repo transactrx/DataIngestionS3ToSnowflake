@@ -60,3 +60,8 @@ variable "after_stream_task" {
   description = "The name of the Snowflake task to load the data on a table after a stream."
   type        = string
 }
+
+variable "sql_import_query" {
+  description = "Query to populate the desired table from the stream.  This will most likely be a MERGE query."
+  type        = string
+}
