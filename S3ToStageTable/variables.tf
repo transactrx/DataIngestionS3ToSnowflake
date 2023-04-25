@@ -11,12 +11,24 @@ variable "s3_bucket_prefix" {
 variable "aws_key_id" {
   description = "The AWS Key ID for the S3 bucket access."
   type        = string
+  sensitive   = true
 }
 
 variable "aws_secret_key" {
   description = "The AWS Secret Key for the S3 bucket access."
   type        = string
   sensitive   = true
+}
+
+variable "warehouse_name" {
+  description = "The Snowflake data warehouse to create."
+  type = string
+}
+
+variable "warehouse_size" {
+  description = "The size for the Snowflake data warehouse."
+  type = string
+  default = "LARGE"
 }
 
 variable "database_name" {

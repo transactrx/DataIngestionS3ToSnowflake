@@ -59,10 +59,10 @@ resource "snowflake_table" "transactions_table" {
 }
 
 resource "snowflake_warehouse" "data_load_warehouse" {
-  name     = "DATA_LOAD_WH"
-  warehouse_size     = "LARGE"
-  auto_suspend = 60
-  auto_resume  = true
+  name                = var.warehouse_name
+  warehouse_size      = var.warehouse_size
+  auto_suspend        = 60
+  auto_resume         = true
   initially_suspended = true
 }
 
