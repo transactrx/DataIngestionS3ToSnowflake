@@ -1,3 +1,13 @@
+terraform {
+  required_providers {
+    snowflake = {
+      source  = "Snowflake-Labs/snowflake"
+      version = "~> 0.60"
+      # coconfiguration_aliases = [ snowflake ]
+    }
+  }
+}
+
 resource "snowflake_stream" "pwl_transactions_stream" {
   name        = var.stage_table_stream_name
   database    = var.database_name
