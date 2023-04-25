@@ -3,7 +3,6 @@ terraform {
     snowflake = {
       source  = "Snowflake-Labs/snowflake"
       version = "~> 0.60"
-      # coconfiguration_aliases = [ snowflake ]
     }
   }
 }
