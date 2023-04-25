@@ -32,7 +32,5 @@ resource "snowflake_task" "after_stream_task" {
   # This will run after the data load task
   after     = [var.data_load_task]
 
-  sql_statement = <<-EOS
-    ${var.sql_import_query}
-  EOS
+  sql_statement = ${var.sql_import_query}
 }
