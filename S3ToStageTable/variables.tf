@@ -1,31 +1,3 @@
-variable "snowflake_account" {
-  description = "The Snowflake account name."
-  type        = string
-}
-
-variable "snowflake_username" {
-  description = "The Snowflake username."
-  type        = string
-}
-
-variable "snowflake_password" {
-  description = "The Snowflake password."
-  type        = string
-  sensitive   = true
-}
-
-variable "snowflake_region" {
-  description = "The Snowflake region."
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "snowflake_role" {
-  description = "The Snowflake Role to use."
-  type        = string
-  default     = "SYSADMIN"
-}
-
 variable "s3_bucket_name" {
   description = "The name of the S3 bucket containing ndjson.gz files."
   type        = string
