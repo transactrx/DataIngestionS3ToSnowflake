@@ -1,3 +1,8 @@
+variable "import_from_stage_table_name" {
+  description = "Name of the implementation of this module."
+  type        = string
+}
+
 variable "database_name" {
   description = "The Snowflake database name."
   type        = string
@@ -8,11 +13,6 @@ variable "schema_name" {
   type        = string
 }
 
-variable "warehouse_name" {
-  description = "The Snowflake warehouse name."
-  type        = string
-}
-
 variable "data_load_task" {
   description = "Parent task which we want to trigger after."
   type        = string
@@ -20,16 +20,6 @@ variable "data_load_task" {
 
 variable "stage_table_name" {
   description = "The name of the Snowflake stage/source table where external data was loaded."
-  type        = string
-}
-
-variable "stage_table_stream_name" {
-  description = "The name of the Snowflake stream that will get populated with changes from the Stage table."
-  type        = string
-}
-
-variable "after_stream_task" {
-  description = "The name of the Snowflake task to load the data on a table after a stream."
   type        = string
 }
 
