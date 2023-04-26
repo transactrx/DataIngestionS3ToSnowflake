@@ -7,15 +7,6 @@ terraform {
   }
 }
 
-resource "snowflake_database" "this" {
-  name = var.database_name
-}
-
-resource "snowflake_schema" "this" {
-  name       = var.schema_name
-  database   = snowflake_database.this.name
-}
-
 resource "snowflake_file_format" "ndjson_gz_file_format" {
   name     = "NDJSON_GZ_FILE_FORMAT"
   database = snowflake_database.this.name
