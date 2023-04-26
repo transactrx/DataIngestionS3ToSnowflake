@@ -7,6 +7,13 @@ terraform {
   }
 }
 
+locals {
+  external_stage_name     = "${var.s3_to_stage_import_name}-external-stage"
+  warehouse_name          = "${var.s3_to_stage_import_name}-warehouse"
+  import_stored_proc_name = "${var.s3_to_stage_import_name}-import-sp"
+  data_load_task_name     = "${var.s3_to_stage_import_name}-data-load-task"
+}
+
 resource "snowflake_file_format" "ndjson_gz_file_format" {
   name     = "NDJSON_GZ_FILE_FORMAT"
   database = snowflake_database.this.name
@@ -22,14 +29,14 @@ resource "snowflake_file_format" "ndjson_gz_file_format" {
 }
 
 resource "snowflake_stage" "external_stage" {
-  name     = var.stage_name
-  database = snowflake_database.this.name
-  schema   = snowflake_schema.this.name
+  name     = local.external_stage_name
+  database = var.database_name
+  schema   = var.schema_name
   url      = "s3://${var.s3_bucket_name}/${var.s3_bucket_prefix}"
 
   credentials = "AWS_KEY_ID='${var.aws_s3_account_key_id}' AWS_SECRET_KEY='${var.aws_s3_account_secret_key}'"
 
-  file_format = "FORMAT_NAME = ${snowflake_database.this.name}.${snowflake_schema.this.name}.${snowflake_file_format.ndjson_gz_file_format.name}"
+  file_format = "FORMAT_NAME = ${var.database_name}.${var.schema_name}.${snowflake_file_format.ndjson_gz_file_format.name}"
 }
 
 resource "snowflake_table" "transactions_table" {
@@ -42,15 +49,10 @@ resource "snowflake_table" "transactions_table" {
     name = "data"
     type = "VARIANT"
   }
-
-  depends_on = [
-    snowflake_database.this,
-    snowflake_schema.this
-  ]
 }
 
 resource "snowflake_warehouse" "data_load_warehouse" {
-  name                = var.warehouse_name
+  name                = local.warehouse_name
   warehouse_size      = var.warehouse_size
   auto_suspend        = 60
   auto_resume         = true
@@ -58,7 +60,7 @@ resource "snowflake_warehouse" "data_load_warehouse" {
 }
 
 resource "snowflake_procedure" "data_load_sp" {
-  name      = var.stored_proc_name
+  name      = local.import_stored_proc_name
   database  = var.database_name
   schema    = var.schema_name
   return_type = "VARCHAR"
@@ -91,20 +93,19 @@ resource "snowflake_procedure" "data_load_sp" {
 }
 
 resource "snowflake_task" "data_load_task" {
-  name      = var.data_load_task_name
+  name      = local.data_load_task_name
   database  = var.database_name
   schema    = var.schema_name
-  warehouse = snowflake_warehouse.data_load_warehouse.name
+  warehouse = local.warehouse_name
   # This can be a CRON or an interval in minutes
-  schedule        = var.data_load_task_interval
+  schedule        = var.data_load_interval
   user_task_timeout_ms = "3600000" # 1 hour
   comment         = "Load powerline data from external stage to table every hour."
   enabled = true
 
-  sql_statement = "CALL ${var.database_name}.${var.schema_name}.${var.stored_proc_name}('${snowflake_warehouse.data_load_warehouse.name}')"
+  sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
 
   depends_on = [
-    snowflake_procedure.data_load_sp,
-    snowflake_warehouse.data_load_warehouse
+    snowflake_procedure.data_load_sp
   ]
 }
