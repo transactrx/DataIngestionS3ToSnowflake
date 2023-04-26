@@ -27,7 +27,7 @@ resource "snowflake_stage" "external_stage" {
   schema   = snowflake_schema.this.name
   url      = "s3://${var.s3_bucket_name}/${var.s3_bucket_prefix}"
 
-  credentials = "AWS_KEY_ID='${var.aws_key_id}' AWS_SECRET_KEY='${var.aws_secret_key}'"
+  credentials = "AWS_KEY_ID='${var.aws_s3_account_key_id}' AWS_SECRET_KEY='${var.aws_s3_account_secret_key}'"
 
   file_format = "FORMAT_NAME = ${snowflake_database.this.name}.${snowflake_schema.this.name}.${snowflake_file_format.ndjson_gz_file_format.name}"
 }
