@@ -13,23 +13,6 @@ variable "s3_bucket_prefix" {
   type        = string
 }
 
-variable "aws_s3_account_key_id" {
-  description = "The AWS Key ID for the S3 bucket access."
-  type        = string
-  sensitive   = true
-}
-
-variable "aws_s3_account_secret_key" {
-  description = "The AWS Secret Key for the S3 bucket access."
-  type        = string
-  sensitive   = true
-}
-
-variable "warehouse_name" {
-  description = "The Snowflake data warehouse to create."
-  type = string
-}
-
 variable "warehouse_size" {
   description = "The size for the Snowflake data warehouse."
   type = string
@@ -46,27 +29,12 @@ variable "schema_name" {
   type        = string
 }
 
-variable "stage_name" {
-  description = "The Snowflake stage name."
-  type        = string
-}
-
 variable "table_name" {
   description = "The Snowflake main raw data table name."
   type        = string
 }
 
-variable "stored_proc_name" {
-  description = "The Snowflake data load stored procedure name."
-  type        = string
-}
-
-variable "data_load_task_name" {
-  description = "The name of the Snowflake task to load the data."
-  type        = string
-}
-
-variable "data_load_task_interval" {
+variable "data_load_interval" {
   description = "Interval to run the data_load_task."
   type = string
   default = "USING CRON 0 * * * *	UTC"
