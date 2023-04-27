@@ -8,10 +8,10 @@ terraform {
 }
 
 locals {
-  external_stage_name     = "${var.s3_to_stage_import_name}-external-stage"
-  warehouse_name          = "${var.s3_to_stage_import_name}-warehouse"
-  import_stored_proc_name = "${var.s3_to_stage_import_name}-import-sp"
-  data_load_task_name     = "${var.s3_to_stage_import_name}-data-load-task"
+  external_stage_name     = "${var.s3_to_stage_import_name}_external_stage"
+  warehouse_name          = "${var.s3_to_stage_import_name}_warehouse"
+  import_stored_proc_name = "${var.s3_to_stage_import_name}_import_sp"
+  data_load_task_name     = "${var.s3_to_stage_import_name}_data_load_task"
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
