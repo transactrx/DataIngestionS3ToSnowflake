@@ -3,6 +3,11 @@ variable "import_from_stage_table_name" {
   type        = string
 }
 
+variable "warehouse_name" {
+  description = "The Snowflake warehouse name."
+  type        = string
+}
+
 variable "database_name" {
   description = "The Snowflake database name."
   type        = string
@@ -26,4 +31,4 @@ variable "stage_table_name" {
 variable "sql_import_query" {
   description = "Query to populate the desired table from the stream.  This will most likely be a MERGE query."
   type        = string
-}
+} 
