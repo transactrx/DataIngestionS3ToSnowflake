@@ -8,7 +8,7 @@ output "data_load_task_name" {
   description = "Task which loads the S3 data into the transactions table."
 }
 
-output "transactions_table_name" {
+output "raw_table_name" {
   value       = snowflake_table.transactions_table.name
   description = "Transactions table name."
 }

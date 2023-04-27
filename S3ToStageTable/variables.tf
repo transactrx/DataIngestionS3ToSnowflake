@@ -41,7 +41,7 @@ variable "schema_name" {
   type        = string
 }
 
-variable "table_name" {
+variable "raw_table_name" {
   description = "The Snowflake main raw data table name."
   type        = string
 }

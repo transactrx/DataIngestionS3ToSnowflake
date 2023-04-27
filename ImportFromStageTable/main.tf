@@ -19,7 +19,7 @@ resource "snowflake_stream" "transactions_stream" {
   schema      = var.schema_name
   comment     = "Stream for changes to the transactions source table"
   
-  on_table    = "${var.database_name}.${var.schema_name}.${var.stage_table_name}"
+  on_table    = "${var.database_name}.${var.schema_name}.${var.raw_table_name}"
   
   append_only = true
   insert_only = false

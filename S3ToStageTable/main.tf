@@ -42,7 +42,7 @@ resource "snowflake_stage" "external_stage" {
 resource "snowflake_table" "transactions_table" {
   database        = var.database_name
   schema          = var.schema_name
-  name            = var.table_name
+  name            = var.raw_table_name
   change_tracking = true
 
   column {
