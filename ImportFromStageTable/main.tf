@@ -46,7 +46,7 @@ resource "snowflake_procedure" "data_load_sp" {
       stmt = snowflake.createStatement({ sqlText: sql_command });
       stmt.execute();
 
-      sql_command = "${var.sql_import_query}"
+      sql_command = ${var.sql_import_query}
       stmt = snowflake.createStatement({ sqlText: sql_command });
       stmt.execute();
 
