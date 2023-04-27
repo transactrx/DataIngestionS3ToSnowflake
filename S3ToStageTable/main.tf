@@ -15,17 +15,17 @@ locals {
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
-  name     = "NDJSON_GZ_FILE_FORMAT"
-  database = snowflake_database.this.name
-  schema   = snowflake_schema.this.name
-  compression = "AUTO"
+  name              = "NDJSON_GZ_FILE_FORMAT"
+  database          = var.database_name
+  schema            = var.schema_name
+  compression       = "AUTO"
 
-  binary_format                  = "HEX"
-  date_format                    = "AUTO"
-  time_format                    = "AUTO"
-  timestamp_format               = "AUTO"
+  binary_format     = "HEX"
+  date_format       = "AUTO"
+  time_format       = "AUTO"
+  timestamp_format  = "AUTO"
 
-  format_type = "JSON"
+  format_type       = "JSON"
 }
 
 resource "snowflake_stage" "external_stage" {

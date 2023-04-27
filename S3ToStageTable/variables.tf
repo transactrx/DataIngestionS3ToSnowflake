@@ -3,6 +3,18 @@ variable "s3_to_stage_import_name" {
   type        = string
 }
 
+variable "aws_s3_account_key_id" {
+  description = "The AWS Key ID for the S3 bucket access."
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_s3_account_secret_key" {
+  description = "The AWS Secret Key for the S3 bucket access."
+  type        = string
+  sensitive   = true
+}
+
 variable "s3_bucket_name" {
   description = "The name of the S3 bucket containing ndjson.gz files."
   type        = string
