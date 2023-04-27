@@ -8,10 +8,10 @@ terraform {
 }
 
 locals {
-  stream_name             = "${var.import_from_stage_table_name}_stream"
-  warehouse_name          = "${var.import_from_stage_table_name}_warehouse"
-  after_stream_task_name  = "${var.import_from_stage_table_name}_after_stream_task"
-  import_stored_proc_name = "${var.import_from_stage_table_name}_after_stream_import_sp"
+  stream_name             = upper("${var.import_from_stage_table_name}_stream")
+  warehouse_name          = upper("${var.import_from_stage_table_name}_warehouse")
+  after_stream_task_name  = upper("${var.import_from_stage_table_name}_after_stream_task")
+  import_stored_proc_name = upper("${var.import_from_stage_table_name}_after_stream_import_sp")
 }
 
 resource "snowflake_stream" "transactions_stream" {
