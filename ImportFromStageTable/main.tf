@@ -72,4 +72,8 @@ resource "snowflake_task" "after_stream_task" {
   after     = [var.data_load_task]
 
   sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
+
+  depends_on = [
+    snowflake_procedure.data_load_sp
+  ]
 }
