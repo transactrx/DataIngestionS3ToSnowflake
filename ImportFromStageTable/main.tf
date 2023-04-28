@@ -77,7 +77,7 @@ resource "snowflake_task" "after_stream_task" {
   comment   = "Load powerline data from external stage to table every hour."
   enabled   = true
   # This will run after the data load task
-  after     = [var.data_load_task]
+  after     = [var.run_after_task]
 
   sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
 

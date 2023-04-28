@@ -19,7 +19,7 @@ variable "schema_name" {
   type        = string
 }
 
-variable "data_load_task" {
+variable "run_after_task" {
   description = "Parent task which we want to trigger after."
   type        = string
 }
