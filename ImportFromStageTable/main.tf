@@ -8,9 +8,9 @@ terraform {
 }
 
 locals {
-  stream_name             = upper("${var.name}_stream")
-  after_stream_task_name  = upper("${var.name}_after_stream_task")
-  import_stored_proc_name = upper("${var.name}_after_stream_import_sp")
+  stream_name             = upper("stream_${var.name}")
+  after_stream_task_name  = upper("after_stream_task_${var.name}")
+  import_stored_proc_name = upper("after_stream_import_sp_${var.name}")
 }
 
 resource "snowflake_stream" "transactions_stream" {

@@ -8,10 +8,10 @@ terraform {
 }
 
 locals {
-  external_stage_name     = upper("${var.name}_external_stage")
-  warehouse_name          = upper("${var.name}_warehouse")
-  import_stored_proc_name = upper("${var.name}_import_sp")
-  data_load_task_name     = upper("${var.name}_data_load_task")
+  external_stage_name     = upper("external_stage_${var.name}")
+  warehouse_name          = upper("warehouse_${var.name}")
+  import_stored_proc_name = upper("import_sp_${var.name}")
+  data_load_task_name     = upper("data_load_task_${var.name}")
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
