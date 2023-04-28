@@ -8,6 +8,7 @@ terraform {
 }
 
 locals {
+  raw_table_name          = upper("raw_${var.name}")
   external_stage_name     = upper("external_stage_${var.name}")
   warehouse_name          = upper("warehouse_${var.name}")
   import_stored_proc_name = upper("import_sp_${var.name}")
@@ -42,7 +43,7 @@ resource "snowflake_stage" "external_stage" {
 resource "snowflake_table" "transactions_table" {
   database        = var.database_name
   schema          = var.schema_name
-  name            = var.raw_table_name
+  name            = local.raw_table_name
   change_tracking = true
 
   column {

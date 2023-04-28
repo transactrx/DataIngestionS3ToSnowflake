@@ -41,11 +41,6 @@ variable "schema_name" {
   type        = string
 }
 
-variable "raw_table_name" {
-  description = "The Snowflake main raw data table name."
-  type        = string
-}
-
 variable "data_load_interval" {
   description = "Interval to run the data_load_task."
   type = string
