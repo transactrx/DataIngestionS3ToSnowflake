@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Name of the implementation of this module."
+  description = "Name of the implementation of this module. This will help identify the resources created by the module."
   type        = string
 }
 
@@ -32,12 +32,12 @@ variable "warehouse_size" {
 }
 
 variable "database_name" {
-  description = "The Snowflake database name."
+  description = "The Snowflake database name. The database must exist or the module will fail."
   type        = string
 }
 
 variable "schema_name" {
-  description = "The Snowflake schema name."
+  description = "The Snowflake schema name. The schema must exist or the module will fail."
   type        = string
 }
 
