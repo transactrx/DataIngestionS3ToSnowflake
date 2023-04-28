@@ -1,4 +1,4 @@
-variable "import_from_stage_table_name" {
+variable "name" {
   description = "Name of the implementation of this module."
   type        = string
 }

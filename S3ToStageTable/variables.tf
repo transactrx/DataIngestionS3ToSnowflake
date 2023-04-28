@@ -1,4 +1,4 @@
-variable "s3_to_stage_import_name" {
+variable "name" {
   description = "Name of the implementation of this module."
   type        = string
 }
