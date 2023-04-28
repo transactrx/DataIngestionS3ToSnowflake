@@ -3,9 +3,10 @@ variable "name" {
   type        = string
 }
 
-variable "warehouse_name" {
-  description = "The Snowflake warehouse name."
-  type        = string
+variable "warehouse_size" {
+  description = "The size for the Snowflake data warehouse."
+  type = string
+  default = "LARGE"
 }
 
 variable "database_name" {

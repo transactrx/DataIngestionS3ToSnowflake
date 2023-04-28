@@ -8,9 +8,18 @@ terraform {
 }
 
 locals {
+  warehouse_name          = upper("warehouse_${var.name}")
   stream_name             = upper("stream_${var.name}")
   after_stream_task_name  = upper("after_stream_task_${var.name}")
   import_stored_proc_name = upper("after_stream_import_sp_${var.name}")
+}
+
+resource "snowflake_warehouse" "data_load_warehouse" {
+  name                = local.warehouse_name
+  warehouse_size      = var.warehouse_size
+  auto_suspend        = 60
+  auto_resume         = true
+  initially_suspended = true
 }
 
 resource "snowflake_stream" "transactions_stream" {
@@ -62,7 +71,7 @@ resource "snowflake_task" "after_stream_task" {
   name      = local.after_stream_task_name
   database  = var.database_name
   schema    = var.schema_name
-  warehouse = var.warehouse_name
+  warehouse = local.warehouse_name
 
   user_task_timeout_ms = "3600000" # 1 hour
   comment   = "Load powerline data from external stage to table every hour."
@@ -70,7 +79,7 @@ resource "snowflake_task" "after_stream_task" {
   # This will run after the data load task
   after     = [var.data_load_task]
 
-  sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${var.warehouse_name}')"
+  sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
 
   depends_on = [
     snowflake_procedure.data_load_sp
