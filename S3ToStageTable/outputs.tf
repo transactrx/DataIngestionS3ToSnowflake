@@ -9,6 +9,6 @@ output "data_load_task_name" {
 }
 
 output "raw_table_name" {
-  value       = snowflake_table.transactions_table.name
+  value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_table.transactions_table.name}"
   description = "Transactions table name."
 }
