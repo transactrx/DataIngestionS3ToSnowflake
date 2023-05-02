@@ -4,7 +4,7 @@ output "warehouse_name" {
 }
 
 output "data_load_task_name" {
-  value       = snowflake_task.data_load_task.name
+  value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_task.data_load_task.name}"
   description = "Task which loads the S3 data into the transactions table."
 }
 
