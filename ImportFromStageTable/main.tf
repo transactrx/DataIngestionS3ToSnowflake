@@ -49,21 +49,32 @@ resource "snowflake_procedure" "data_load_sp" {
   }
 
   statement = <<-EOT
-      var whn = WAREHOUSE_NAME
-      sql_command = "CREATE WAREHOUSE IF NOT EXISTS " + whn + " WITH WAREHOUSE_SIZE = 'LARGE' INITIALLY_SUSPENDED=FALSE AUTO_SUSPEND=60 AUTO_RESUME=TRUE;";
-
+      sql_command = "select system$stream_has_data('${var.database_name}.${var.schema_name}.${snowflake_stream.transactions_stream.name}');";
       stmt = snowflake.createStatement({ sqlText: sql_command });
-      stmt.execute();
+      var rs = stmt.execute();
+      rs.next();
+      var has_data = rs.getColumnValue(1);
 
-      sql_command = ${var.sql_import_query}
-      stmt = snowflake.createStatement({ sqlText: sql_command });
-      stmt.execute();
+      if (has_data) {
+        var whn = WAREHOUSE_NAME
+        sql_command = "CREATE WAREHOUSE IF NOT EXISTS " + whn + " WITH WAREHOUSE_SIZE = 'LARGE' INITIALLY_SUSPENDED=FALSE AUTO_SUSPEND=60 AUTO_RESUME=TRUE;";
 
-      sql_command = "ALTER WAREHOUSE " + whn + " SUSPEND;";
-      stmt = snowflake.createStatement({ sqlText: sql_command });
-      stmt.execute();
+        stmt = snowflake.createStatement({ sqlText: sql_command });
+        stmt.execute();
 
-      return "Data loaded successfully";
+        sql_command = ${var.sql_import_query}
+        stmt = snowflake.createStatement({ sqlText: sql_command });
+        stmt.execute();
+
+        sql_command = "ALTER WAREHOUSE " + whn + " SUSPEND;";
+        stmt = snowflake.createStatement({ sqlText: sql_command });
+        stmt.execute();
+
+        return "Data loaded successfully";
+      }
+      else {
+        return "No data to load";
+      }
   EOT
 }
 
@@ -77,7 +88,8 @@ resource "snowflake_task" "after_stream_task" {
   comment   = "Load powerline data from external stage to table every hour."
   enabled   = true
   # This will run after the data load task
-  after     = [var.run_after_task]
+  # after     = [var.run_after_task]
+  schedule  = 60
 
   sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
 
