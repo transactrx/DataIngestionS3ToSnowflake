@@ -89,7 +89,7 @@ resource "snowflake_task" "after_stream_task" {
   enabled   = true
   # This will run after the data load task
   # after     = [var.run_after_task]
-  schedule  = 60
+  schedule  = "60 MINUTE"
 
   sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
 
