@@ -19,11 +19,6 @@ variable "schema_name" {
   type        = string
 }
 
-variable "run_after_task" {
-  description = "Parent task which we want to trigger after."
-  type        = string
-}
-
 variable "raw_table_name" {
   description = "The name of the Snowflake stage/source table where external data was loaded."
   type        = string
