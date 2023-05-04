@@ -9,7 +9,7 @@ terraform {
 
 locals {
   warehouse_name          = upper("warehouse_${var.name}")
-  stream_name             = upper("stream_${var.name}")
+  stream_name             = upper("stream_${var.stage_table_name}")
   stream_task_name        = upper("stream_task_${var.name}")
   import_stored_proc_name = upper("stream_import_sp_${var.name}")
 }
