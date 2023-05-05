@@ -78,7 +78,7 @@ resource "snowflake_task" "stream_task" {
   schedule  = var.import_interval
 
   # sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
-  sql_command = ${var.sql_import_query}
+  sql_command = "${var.sql_import_query}"
 
   depends_on = [
     snowflake_procedure.data_load_sp

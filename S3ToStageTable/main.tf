@@ -105,7 +105,7 @@ resource "snowflake_task" "data_load_task" {
   enabled = true
 
   # sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
-  sql_command = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name})";
+  sql_command = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name});"
 
   # depends_on = [
   #   snowflake_procedure.data_load_sp
