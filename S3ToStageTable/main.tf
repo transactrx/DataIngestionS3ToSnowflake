@@ -93,40 +93,6 @@ resource "snowflake_table" "transactions_table" {
 #   EOT
 # }
 
-# resource "snowflake_task_grant" "grant_execute_task" {
-#   database_name = var.database_name
-#   schema_name   = var.schema_name
-
-#   privilege = "EXECUTE TASK"
-#   roles     = ["${var.snowflake_role}"]
-
-#   on_future         = false
-#   with_grant_option = false
-# }
-
-# resource "snowflake_task_grant" "grant_execute_managed_task" {
-#   database_name = var.database_name
-#   schema_name   = var.schema_name
-
-#   privilege = "OWNERSHIP"
-#   roles     = ["${var.snowflake_role}"]
-
-#   on_future         = false
-#   with_grant_option = false
-# }
-
-resource "snowflake_account_grant" "grant_execute_task" {
-  roles             = ["${var.snowflake_role}"]
-  privilege         = "EXECUTE TASK"
-  with_grant_option = false
-}
-
-resource "snowflake_account_grant" "grant_execute_managed_task" {
-  roles             = ["${var.snowflake_role}"]
-  privilege         = "EXECUTE MANAGED TASK"
-  with_grant_option = false
-}
-
 resource "snowflake_task" "data_load_task" {
   name      = local.data_load_task_name
   database  = var.database_name
@@ -140,9 +106,4 @@ resource "snowflake_task" "data_load_task" {
 
   # sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
   sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name});"
-
-  depends_on = [
-    snowflake_account_grant.grant_execute_task,
-    snowflake_account_grant.grant_execute_managed_task
-  ]
 }
