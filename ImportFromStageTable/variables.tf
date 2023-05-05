@@ -3,12 +3,6 @@ variable "name" {
   type        = string
 }
 
-variable "warehouse_size" {
-  description = "The size for the Snowflake data warehouse."
-  type = string
-  default = "LARGE"
-}
-
 variable "database_name" {
   description = "The Snowflake database name. The database must exist or the module will fail."
   type        = string
@@ -32,7 +26,7 @@ variable "sql_import_query" {
 variable "import_interval" {
   description = "Interval to run task to import the data."
   type = string
-  default = "60 MINUTE"
+  default = "USING CRON 15 * * * * America/New_York"
 }
 
 variable "load_historical_data" {

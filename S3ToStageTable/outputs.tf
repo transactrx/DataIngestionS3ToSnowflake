@@ -1,8 +1,3 @@
-# output "warehouse_name" {
-#   value       = snowflake_warehouse.data_load_warehouse.name
-#   description = "Snowflake warehouse name."
-# }
-
 output "data_load_task_full_name" {
   value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_task.data_load_task.name}"
   description = "Full name (with database and schema) of the task which loads the S3 data into the transactions table."
