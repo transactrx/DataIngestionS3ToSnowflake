@@ -34,7 +34,7 @@ resource "snowflake_stream" "transactions_stream" {
   append_only = true
   insert_only = false
 
-  show_initial_rows = true
+  show_initial_rows = var.load_historical_data
 }
 
 resource "snowflake_procedure" "data_load_sp" {

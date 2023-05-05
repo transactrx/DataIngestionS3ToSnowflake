@@ -34,3 +34,9 @@ variable "import_interval" {
   type = string
   default = "60 MINUTE"
 }
+
+variable "load_historical_data" {
+  description = "If true, this will load all the existing data in the source table.  This is true by default."
+  type = bool
+  default = true
+}
