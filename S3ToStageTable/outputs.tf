@@ -5,10 +5,10 @@ output "warehouse_name" {
 
 output "data_load_task_name" {
   value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_task.data_load_task.name}"
-  description = "Task which loads the S3 data into the transactions table."
+  description = "Full name (with database and schema) of the task which loads the S3 data into the transactions table."
 }
 
 output "stage_table_name" {
-  value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_table.transactions_table.name}"
+  value       = "${snowflake_table.transactions_table.name}"
   description = "Transactions table name."
 }
