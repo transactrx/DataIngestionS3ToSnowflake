@@ -46,3 +46,9 @@ variable "data_load_interval" {
   type = string
   default = "USING CRON 0 * * * *	UTC"
 }
+
+variable "snowflake_role" {
+  description = "The Snowflake Role to use."
+  type        = string
+  default     = "SYSADMIN"
+}
