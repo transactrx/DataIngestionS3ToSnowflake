@@ -142,7 +142,7 @@ resource "snowflake_task" "data_load_task" {
   sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name});"
 
   depends_on = [
-    snowflake_task_grant.grant_execute_task
+    snowflake_task_grant.grant_execute_task,
     snowflake_task_grant.grant_execute_managed_task
   ]
 }
