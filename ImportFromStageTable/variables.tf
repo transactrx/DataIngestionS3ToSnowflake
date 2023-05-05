@@ -19,8 +19,8 @@ variable "schema_name" {
   type        = string
 }
 
-variable "stage_table_name" {
-  description = "The name of the Snowflake stage/source table where external data was loaded."
+variable "stage_table_full_name" {
+  description = "The full name (including database and schema) of the Snowflake stage/source table where external data was loaded."
   type        = string
 }
 

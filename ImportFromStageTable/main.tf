@@ -9,7 +9,8 @@ terraform {
 
 locals {
   warehouse_name          = upper("warehouse_${var.name}")
-  stream_name             = upper("stream_${var.stage_table_name}")
+  pieces_of_table_name    = split(".", "${var.stage_table_full_name}")
+  stream_name             = upper("stream_${local.pieces_of_table_name[2]}")
   stream_task_name        = upper("stream_task_${var.name}")
   import_stored_proc_name = upper("stream_import_sp_${var.name}")
 }
@@ -28,7 +29,7 @@ resource "snowflake_stream" "transactions_stream" {
   schema      = var.schema_name
   comment     = "Stream for changes to the transactions source table"
   
-  on_table    = "${var.stage_table_name}"
+  on_table    = "${var.stage_table_full_name}"
   
   append_only = true
   insert_only = false
