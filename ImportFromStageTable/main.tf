@@ -37,34 +37,34 @@ resource "snowflake_stream" "transactions_stream" {
   show_initial_rows = var.load_historical_data
 }
 
-resource "snowflake_procedure" "data_load_sp" {
-  name      = local.import_stored_proc_name
-  database  = var.database_name
-  schema    = var.schema_name
-  return_type = "VARCHAR"
-  language = "JAVASCRIPT"
-  comment = "Store Procedure to load new data comming the transactions table.  It will create the WH if it does not exist and suspend it after execution."
-  execute_as = "CALLER"
+# resource "snowflake_procedure" "data_load_sp" {
+#   name      = local.import_stored_proc_name
+#   database  = var.database_name
+#   schema    = var.schema_name
+#   return_type = "VARCHAR"
+#   language = "JAVASCRIPT"
+#   comment = "Store Procedure to load new data comming the transactions table.  It will create the WH if it does not exist and suspend it after execution."
+#   execute_as = "CALLER"
 
-  statement = <<-EOT
-      sql_command = "select system$stream_has_data('${var.database_name}.${var.schema_name}.${snowflake_stream.transactions_stream.name}');";
-      stmt = snowflake.createStatement({ sqlText: sql_command });
-      var rs = stmt.execute();
-      rs.next();
-      var has_data = rs.getColumnValue(1);
+#   statement = <<-EOT
+#       sql_command = "select system$stream_has_data('${var.database_name}.${var.schema_name}.${snowflake_stream.transactions_stream.name}');";
+#       stmt = snowflake.createStatement({ sqlText: sql_command });
+#       var rs = stmt.execute();
+#       rs.next();
+#       var has_data = rs.getColumnValue(1);
 
-      if (has_data) {
-        sql_command = ${var.sql_import_query}
-        stmt = snowflake.createStatement({ sqlText: sql_command });
-        stmt.execute();
+#       if (has_data) {
+#         sql_command = ${var.sql_import_query}
+#         stmt = snowflake.createStatement({ sqlText: sql_command });
+#         stmt.execute();
 
-        return "Data loaded successfully";
-      }
-      else {
-        return "No data to load";
-      }
-  EOT
-}
+#         return "Data loaded successfully";
+#       }
+#       else {
+#         return "No data to load";
+#       }
+#   EOT
+# }
 
 resource "snowflake_task" "stream_task" {
   name      = local.stream_task_name
@@ -80,8 +80,10 @@ resource "snowflake_task" "stream_task" {
   # sql_statement = "CALL ${var.database_name}.${var.schema_name}.${snowflake_procedure.data_load_sp.name}('${local.warehouse_name}')"
   sql_statement = "${var.sql_import_query}"
 
-  depends_on = [
-    snowflake_procedure.data_load_sp
-    # snowflake_warehouse.data_load_warehouse
-  ]
+  when          = "system$stream_has_data('${var.database_name}.${var.schema_name}.${snowflake_stream.transactions_stream.name}')"
+
+  # depends_on = [
+  #   snowflake_procedure.data_load_sp
+  #   # snowflake_warehouse.data_load_warehouse
+  # ]
 }
