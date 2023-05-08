@@ -61,5 +61,5 @@ resource "snowflake_task" "data_load_task" {
   comment         = "Load powerline data from external stage to table every hour."
   enabled = true
 
-  sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name});"
+  sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} FROM (SELECT * FROM @${snowflake_stage.external_stage.name})"
 }
