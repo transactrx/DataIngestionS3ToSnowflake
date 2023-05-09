@@ -26,6 +26,12 @@ resource "snowflake_stream" "transactions_stream" {
   insert_only = false
 
   show_initial_rows = var.load_historical_data
+
+  lifecycle {
+    ignore_changes = [
+      show_initial_rows
+    ]
+  }
 }
 
 resource "snowflake_task" "stream_task" {
