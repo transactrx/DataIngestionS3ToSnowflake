@@ -26,7 +26,7 @@ variable "sql_import_query" {
 variable "import_interval" {
   description = "Interval to run task to import the data."
   type = string
-  default = "USING CRON 15 * * * * America/New_York"
+  default = "USING CRON */10 * * * * America/New_York"
 }
 
 variable "load_historical_data" {
