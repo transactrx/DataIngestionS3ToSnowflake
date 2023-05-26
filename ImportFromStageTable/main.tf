@@ -9,6 +9,7 @@ terraform {
 
 locals {
   stream_name             = upper("stream_${var.name}")
+  stream_name_full= "${var.database_name}.${var.schema_name}.${local.stream_name}"
   stream_task_name        = upper("stream_task_${var.name}")
   import_stored_proc_name = upper("stream_import_sp_${var.name}")
 }
@@ -34,7 +35,7 @@ resource "snowflake_stream" "transactions_stream" {
 }
 
 locals {
-  fixed_import_query = replace(var.sql_import_query,"$$$STREAM$$$",local.stream_name)
+  fixed_import_query = replace(var.sql_import_query,"$$$STREAM$$$",local.stream_name_full)
 }
 
 resource "snowflake_task" "stream_task" {
@@ -49,5 +50,5 @@ resource "snowflake_task" "stream_task" {
 
   sql_statement = local.fixed_import_query
 
-  when          = "system$stream_has_data('${var.database_name}.${var.schema_name}.${snowflake_stream.transactions_stream.name}')"
+  when          = "system$stream_has_data('${local.stream_name_full}')"
 }
