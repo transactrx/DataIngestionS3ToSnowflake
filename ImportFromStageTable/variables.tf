@@ -2,6 +2,19 @@ variable "name" {
   description = "Name of the implementation of this module. This will help identify the resources created by the module."
   type        = string
 }
+variable "import_interval" {
+  description = "Interval to run task to import the data."
+  type = string
+  default = "USING CRON */10 * * * * America/New_York"
+}
+
+variable "load_historical_data" {
+  description = "If true, this will load all the existing data in the source table.  This is true by default."
+  type = bool
+  default = true
+}
+
+//These are read from the environment in the github action.
 
 variable "database_name" {
   description = "The Snowflake database name. The database must exist or the module will fail."
@@ -23,14 +36,3 @@ variable "sql_import_query" {
   type        = string
 }
 
-variable "import_interval" {
-  description = "Interval to run task to import the data."
-  type = string
-  default = "USING CRON */10 * * * * America/New_York"
-}
-
-variable "load_historical_data" {
-  description = "If true, this will load all the existing data in the source table.  This is true by default."
-  type = bool
-  default = true
-}

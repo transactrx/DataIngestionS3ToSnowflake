@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "data_load_interval" {
+  description = "Interval to run the data_load_task."
+  type = string
+  default = "USING CRON 0 * * * *	America/New_York"
+}
+
 variable "aws_s3_account_key_id" {
   description = "The AWS Key ID for the S3 bucket access."
   type        = string
@@ -35,8 +41,3 @@ variable "schema_name" {
   type        = string
 }
 
-variable "data_load_interval" {
-  description = "Interval to run the data_load_task."
-  type = string
-  default = "USING CRON 0 * * * *	America/New_York"
-}
