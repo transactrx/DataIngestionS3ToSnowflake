@@ -4,7 +4,7 @@ output "data_load_task_full_name" {
 }
 
 output "stage_table_name" {
-  value       = "${snowflake_table.transactions_table.name}"
+  value       = snowflake_table.transactions_table.name
   description = "Transactions table name."
 }
 

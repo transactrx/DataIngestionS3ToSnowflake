@@ -9,7 +9,7 @@ terraform {
 
 locals {
   stream_name             = upper("stream_${var.name}")
-  stream_name_full= "${var.database_name}.${var.schema_name}.${local.stream_name}"
+  stream_name_full        = "${var.database_name}.${var.schema_name}.${local.stream_name}"
   stream_task_name        = upper("stream_task_${var.name}")
   import_stored_proc_name = upper("stream_import_sp_${var.name}")
 }
