@@ -12,10 +12,11 @@ locals {
   external_stage_name     = upper("external_stage_${var.name}")
   import_stored_proc_name = upper("import_sp_${var.name}")
   data_load_task_name     = upper("data_load_task_${var.name}")
+  file_format_name        = upper("NDJSON_GZ_FORMAT_${var.name}")
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
-  name              = "NDJSON_GZ_FILE_FORMAT"
+  name              = local.file_format_name
   database          = var.database_name
   schema            = var.schema_name
   compression       = "AUTO"
