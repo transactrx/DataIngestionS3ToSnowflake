@@ -45,14 +45,14 @@ resource "snowflake_table" "transactions_table" {
   schema          = var.schema_name
   name            = local.stage_table_name
   change_tracking = true
-  cluster_by      = ["to_date(CREATED)"]
+  cluster_by      = var.cluster_by
 
   column {
     name = "DATA"
     type = "VARIANT"
   }
   column {
-    name = "CREATED"
+    name = "INGESTED_TIMESTAMP"
     type = "TIMESTAMP_NTZ(9)"
     default {
       expression = "CURRENT_TIMESTAMP()"

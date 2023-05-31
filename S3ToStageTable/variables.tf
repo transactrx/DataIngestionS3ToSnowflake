@@ -41,3 +41,8 @@ variable "schema_name" {
   type        = string
 }
 
+variable "cluster_by" {
+  description = "The field to cluster the table by"
+  type = list(string)
+}
+
