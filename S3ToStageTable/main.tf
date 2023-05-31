@@ -58,6 +58,9 @@ resource "snowflake_table" "transactions_table" {
       expression = "CURRENT_TIMESTAMP()"
     }
   }
+  lifecycle {
+    ignore_changes = [cluster_by]
+  }
 }
 
 resource "snowflake_task" "data_load_task" {
