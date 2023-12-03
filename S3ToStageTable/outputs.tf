@@ -8,7 +8,7 @@ output "stage_table_name" {
   description = "Transactions table name."
 }
 
-#output "stage_table_full_name" {
-#  value       = "${snowflake_task.data_load_task.database}.${snowflake_task.data_load_task.schema}.${snowflake_table.transactions_table.name}"
-#  description = "Transactions table full name (including the database and schema)."
-#}
+output "stage_table_full_name" {
+  value       = "${var.database_name}.${var.schema_name}.${snowflake_table.transactions_table.name}"
+  description = "Transactions table full name (including the database and schema)."
+}
