@@ -69,9 +69,18 @@ resource "snowflake_table" "transactions_table" {
   }
 }
 
+#resource "snowflake_pipe" "my_pipe" {
+#  name     = "my_pipe"
+#  database = "your_database"
+#  schema   = "your_schema"
+#  statement = "COPY INTO ${snowflake_table.my_target_table.database}.${snowflake_table.my_target_table.schema}.${snowflake_table.my_target_table.name}(data) FROM @${snowflake_stage.my_stage.name} FILE_FORMAT = (FORMAT_NAME = '${snowflake_file_format.my_file_format.name}')"
+#  auto_ingest = true
+#}
+
+
 resource "snowflake_pipe" "snowpipe" {
   depends_on = [snowflake_table.transactions_table,snowflake_stage.external_stage]
-  copy_statement = "COPY INTO ${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
+  copy_statement = "COPY INTO ${snowflake_table.transactions_table.database}.${snowflake_table.transactions_table.schema}.${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
   database       = var.database_name
   name           = var.name
   schema         = var.schema_name
