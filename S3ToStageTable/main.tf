@@ -70,7 +70,7 @@ resource "snowflake_table" "transactions_table" {
 }
 
 resource "snowflake_pipe" "snowpipe" {
-  depends_on = [snowflake_table.transactions_table]
+  depends_on = [snowflake_table.transactions_table,snowflake_stage.external_stage]
   copy_statement = "COPY INTO ${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
   database       = var.database_name
   name           = var.name
