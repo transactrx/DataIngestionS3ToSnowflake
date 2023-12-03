@@ -4,8 +4,14 @@ terraform {
       source  = "Snowflake-Labs/snowflake"
       version = "~> 0.60"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 2.7.0"
+      configuration_aliases = [aws.dest]
+    }
   }
 }
+
 
 locals {
   stage_table_name        = upper("stage_${var.name}")
@@ -63,15 +69,32 @@ resource "snowflake_table" "transactions_table" {
   }
 }
 
-resource "snowflake_task" "data_load_task" {
-  name      = local.data_load_task_name
-  database  = var.database_name
-  schema    = var.schema_name
-  # This can be a CRON or an interval in minutes
-  schedule        = var.data_load_interval
-  user_task_timeout_ms = "3600000" # 1 hour
-  comment         = "Load powerline data from external stage to table every hour."
-  enabled = true
-
-  sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
+resource "snowflake_pipe" "snowpipe" {
+  copy_statement = "COPY INTO ${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
+  database       = var.database_name
+  name           = var.name
+  schema         = var.schema_name
+  auto_ingest = true
 }
+
+resource "aws_s3_bucket_notification" "s3_notification" {
+  bucket = var.s3_bucket_name
+  queue {
+    queue_arn     = snowflake_pipe.snowpipe.notification_channel
+    events        = ["s3:ObjectCreated:*"]
+  }
+
+}
+
+#resource "snowflake_task" "data_load_task" {
+#  name      = local.data_load_task_name
+#  database  = var.database_name
+#  schema    = var.schema_name
+#  # This can be a CRON or an interval in minutes
+#  schedule        = var.data_load_interval
+#  user_task_timeout_ms = "3600000" # 1 hour
+#  comment         = "Load powerline data from external stage to table every hour."
+#  enabled = true
+#
+#  sql_statement = "COPY INTO ${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.name})"
+#}
