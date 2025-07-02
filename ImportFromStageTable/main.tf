@@ -2,7 +2,7 @@ terraform {
   required_providers {
     snowflake = {
       source  = "snowflakedb/snowflake"
-      version = ">= 0.92.0"
+      version = ">= 0.98.0"
     }
   }
 }
@@ -14,16 +14,16 @@ locals {
   import_stored_proc_name = upper("stream_import_sp_${var.name}")
 }
 
-resource "snowflake_stream" "transactions_stream" {
-  name        = local.stream_name
-  database    = var.database_name
-  schema      = var.schema_name
-  comment     = "Stream for changes to the transactions source table"
-  
-  on_table    = var.stage_table_full_name
-  
-  append_only = true
-  insert_only = false
+resource "snowflake_stream_on_table" "transactions_stream" {
+  name     = local.stream_name
+  database = var.database_name
+  schema   = var.schema_name
+  comment  = "Stream for changes to the transactions source table"
+
+  table = var.stage_table_full_name
+
+  append_only = "true"
+  copy_grants = true
 
   show_initial_rows = var.load_historical_data
 
@@ -35,20 +35,20 @@ resource "snowflake_stream" "transactions_stream" {
 }
 
 locals {
-  fixed_import_query = replace(var.sql_import_query,"$$$STREAM$$$",local.stream_name_full)
+  fixed_import_query = replace(var.sql_import_query, "$$$STREAM$$$", local.stream_name_full)
 }
 
 resource "snowflake_task" "stream_task" {
-  name      = local.stream_task_name
-  database  = var.database_name
-  schema    = var.schema_name
+  name     = local.stream_task_name
+  database = var.database_name
+  schema   = var.schema_name
 
   user_task_timeout_ms = "3600000" # 1 hour
-  comment   = "Load data from external stage to data table on schedule."
-  enabled   = true
-  schedule  = var.import_interval
+  comment              = "Load data from external stage to data table on schedule."
+  enabled              = true
+  schedule             = var.import_interval
 
   sql_statement = local.fixed_import_query
 
-  when          = "system$stream_has_data('${local.stream_name_full}')"
+  when = "system$stream_has_data('${local.stream_name_full}')"
 }
