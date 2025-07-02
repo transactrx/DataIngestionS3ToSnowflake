@@ -5,8 +5,8 @@ terraform {
       version = ">= 0.92.0"
     }
     aws = {
-      source  = "hashicorp/aws"
-      version = ">= 2.7.0"
+      source                = "hashicorp/aws"
+      version               = ">= 2.7.0 != 6.1.0"
       configuration_aliases = [aws.dest]
     }
   }
@@ -22,17 +22,17 @@ locals {
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
-  name              = local.file_format_name
-  database          = var.database_name
-  schema            = var.schema_name
-  compression       = "AUTO"
+  name        = local.file_format_name
+  database    = var.database_name
+  schema      = var.schema_name
+  compression = "AUTO"
 
-  binary_format     = "HEX"
-  date_format       = "AUTO"
-  time_format       = "AUTO"
-  timestamp_format  = "AUTO"
+  binary_format    = "HEX"
+  date_format      = "AUTO"
+  time_format      = "AUTO"
+  timestamp_format = "AUTO"
 
-  format_type       = "JSON"
+  format_type = "JSON"
 }
 
 resource "snowflake_stage" "external_stage" {
@@ -79,19 +79,19 @@ resource "snowflake_table" "transactions_table" {
 
 
 resource "snowflake_pipe" "snowpipe" {
-  depends_on = [snowflake_table.transactions_table,snowflake_stage.external_stage]
+  depends_on     = [snowflake_table.transactions_table, snowflake_stage.external_stage]
   copy_statement = "COPY INTO ${snowflake_table.transactions_table.database}.${snowflake_table.transactions_table.schema}.${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.database}.${snowflake_stage.external_stage.schema}.${snowflake_stage.external_stage.name})"
   database       = var.database_name
   name           = var.name
   schema         = var.schema_name
-  auto_ingest = true
+  auto_ingest    = true
 }
 
 resource "aws_s3_bucket_notification" "s3_notification" {
   bucket = var.s3_bucket_name
   queue {
-    queue_arn     = snowflake_pipe.snowpipe.notification_channel
-    events        = ["s3:ObjectCreated:*"]
+    queue_arn = snowflake_pipe.snowpipe.notification_channel
+    events    = ["s3:ObjectCreated:*"]
   }
 
 }
