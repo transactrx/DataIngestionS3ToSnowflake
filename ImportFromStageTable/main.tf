@@ -48,7 +48,7 @@ resource "snowflake_task" "stream_task" {
   started              = true
 
   schedule {
-    using_cron = var.import_schedule
+    using_cron = var.import_interval
   }
 
   sql_statement = local.fixed_import_query

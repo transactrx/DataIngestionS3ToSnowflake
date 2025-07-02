@@ -4,14 +4,14 @@ variable "name" {
 }
 variable "import_interval" {
   description = "Interval to run task to import the data."
-  type = string
-  default = "USING CRON */10 * * * * America/New_York"
+  type        = string
+  default     = "*/10 * * * * America/New_York"
 }
 
 variable "load_historical_data" {
   description = "If true, this will load all the existing data in the source table.  This is true by default."
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 //These are read from the environment in the github action.
