@@ -2,7 +2,7 @@ terraform {
   required_providers {
     snowflake = {
       source  = "snowflakedb/snowflake"
-      version = ">= 0.98.0"
+      version = ">= 0.99.0"
     }
   }
 }
@@ -45,8 +45,11 @@ resource "snowflake_task" "stream_task" {
 
   user_task_timeout_ms = "3600000" # 1 hour
   comment              = "Load data from external stage to data table on schedule."
-  enabled              = true
-  schedule             = var.import_interval
+  started              = true
+
+  schedule {
+    using-cron = var.import_schedule
+  }
 
   sql_statement = local.fixed_import_query
 
