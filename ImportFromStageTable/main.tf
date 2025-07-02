@@ -47,6 +47,8 @@ resource "snowflake_task" "stream_task" {
   comment              = "Load data from external stage to data table on schedule."
   started              = true
 
+  allow_overlapping_execution = false
+
   schedule {
     using_cron = var.import_interval
   }
