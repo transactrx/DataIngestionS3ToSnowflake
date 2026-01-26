@@ -18,7 +18,7 @@ resource "snowflake_stream_on_table" "transactions_stream" {
   name     = local.stream_name
   database = var.database_name
   schema   = var.schema_name
-  comment  = "Stream for changes to the transactions source table"
+  comment  = var.stream_comment
 
   table = var.stage_table_full_name
 
@@ -44,7 +44,7 @@ resource "snowflake_task" "stream_task" {
   schema   = var.schema_name
 
   user_task_timeout_ms = "3600000" # 1 hour
-  comment              = "Load data from external stage to data table on schedule."
+  comment              = var.task_comment
   started              = true
 
   allow_overlapping_execution = false

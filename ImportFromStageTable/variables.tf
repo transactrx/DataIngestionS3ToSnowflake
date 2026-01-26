@@ -36,3 +36,15 @@ variable "sql_import_query" {
   type        = string
 }
 
+variable "stream_comment" {
+  description = "Comment for the Snowflake stream resource."
+  type        = string
+  default     = "Stream for changes to the transactions source table"
+}
+
+variable "task_comment" {
+  description = "Comment for the Snowflake task resource."
+  type        = string
+  default     = "Load data from external stage to data table on schedule."
+}
+
