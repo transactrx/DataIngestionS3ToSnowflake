@@ -48,3 +48,9 @@ variable "task_comment" {
   default     = "Load data from external stage to data table on schedule."
 }
 
+variable "task_after" {
+  description = "Optional list of predecessor task names that must complete before this task runs. Mutually exclusive with schedule."
+  type        = list(string)
+  default     = null
+}
+

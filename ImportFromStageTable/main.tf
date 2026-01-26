@@ -49,8 +49,13 @@ resource "snowflake_task" "stream_task" {
 
   allow_overlapping_execution = false
 
-  schedule {
-    using_cron = var.import_interval
+  after = var.task_after
+  dynamic "schedule" {
+    # Schedule is mutually exclusive with after
+    for_each = var.task_after == null ? [1] : []
+    content {
+      using_cron = var.import_interval
+    }
   }
 
   sql_statement = local.fixed_import_query
