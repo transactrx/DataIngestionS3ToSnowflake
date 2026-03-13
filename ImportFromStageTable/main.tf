@@ -42,7 +42,7 @@ resource "snowflake_task" "stream_task" {
   name                     = local.stream_task_name
   database                 = var.database_name
   schema                   = var.schema_name
-  task_auto_retry_attempts = var.auto_retry_attempts
+  task_auto_retry_attempts = var.task_after == null ? var.auto_retry_attempts : null
   user_task_timeout_ms     = var.user_task_timeout_ms
   comment                  = var.task_comment
   started                  = true
