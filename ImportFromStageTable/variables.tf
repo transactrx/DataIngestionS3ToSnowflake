@@ -54,3 +54,15 @@ variable "task_after" {
   default     = null
 }
 
+variable "user_task_timeout_ms" {
+  description = "The number of milliseconds until the task times out. Defaults to 3600000 (1 hour)."
+  type        = number
+  default     = 3600000
+}
+
+variable "auto_retry_attempts" {
+  description = "The number of times to retry a task that fails. Defaults to 0"
+  type        = number
+  default     = 0
+}
+

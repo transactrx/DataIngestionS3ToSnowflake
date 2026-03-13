@@ -39,13 +39,13 @@ locals {
 }
 
 resource "snowflake_task" "stream_task" {
-  name     = local.stream_task_name
-  database = var.database_name
-  schema   = var.schema_name
-
-  user_task_timeout_ms = "3600000" # 1 hour
-  comment              = var.task_comment
-  started              = true
+  name                     = local.stream_task_name
+  database                 = var.database_name
+  schema                   = var.schema_name
+  task_auto_retry_attempts = var.auto_retry_attempts
+  user_task_timeout_ms     = var.user_task_timeout_ms
+  comment                  = var.task_comment
+  started                  = true
 
   allow_overlapping_execution = false
 
