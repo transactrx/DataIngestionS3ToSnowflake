@@ -66,3 +66,8 @@ variable "auto_retry_attempts" {
   default     = 0
 }
 
+variable "error_integration" {
+  description = "Integration for Failed Task Notifications."
+  type        = string
+  default     = null
+}
