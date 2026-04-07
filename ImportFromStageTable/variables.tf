@@ -69,5 +69,5 @@ variable "auto_retry_attempts" {
 variable "error_integration" {
   description = "Integration for Failed Task Notifications."
   type        = string
-  default     = null
+  default     = "SNS_NOTIFICATION" #TODO: This integration is hardcoded. It is defined in the Snowflake Adminsitration Project.
 }
