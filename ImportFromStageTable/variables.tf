@@ -1,10 +1,10 @@
 # =============================================================================
-# test_module — unified streaming-table importer.
+# ImportFromStageTable — unified streaming-table importer.
 #
 # Supports THREE call styles:
 #   1. LEGACY (backwards compatible): pass `name` (string) for an externally
 #      owned table. The module creates ONLY the stream + task; the caller owns
-#      the table. No TASK_META lineage. This is the original test_module
+#      the table. No TASK_META lineage. This is the original ImportFromStageTable
 #      interface and keeps working unchanged.
 #   2. MODULE-OWNED (v2): pass `columns` (+ `name`). The module creates the
 #      table, prepends the TASK_META lineage ARRAY column, and TASK_META stamping

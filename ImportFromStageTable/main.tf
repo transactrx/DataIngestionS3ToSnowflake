@@ -262,10 +262,12 @@ resource "snowflake_task" "stream_task" {
   }
 
   # The task references the target table and stream by literal name (not by
-  # resource attribute), so Terraform cannot infer ordering. Make it explicit
-  # so the table/stream exist before the task is created and started. (In
-  # external and legacy modes the table dependency flows naturally through the
-  # caller's resource reference in sql_import_query instead.)
+  # resource attribute), so Terraform cannot infer ordering from sql_import_query.
+  # Make it explicit so the stream (and, in module-owned mode, the table) exist
+  # before the task is created and started. In external mode, ordering relative
+  # to the table comes from the caller passing the resource via var.existing_table
+  # (the module input depends on it). In legacy mode the caller owns the table
+  # entirely and there is no module-level dependency on it.
   depends_on = [
     snowflake_table.this,
     snowflake_stream_on_table.transactions_stream,
