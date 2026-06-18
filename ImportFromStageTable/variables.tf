@@ -200,8 +200,8 @@ variable "max_history" {
   default     = 5
 
   validation {
-    condition     = var.max_history == null || var.max_history >= 1
-    error_message = "max_history must be null (unbounded) or a positive integer."
+    condition     = var.max_history == null || (var.max_history >= 1 && floor(var.max_history) == var.max_history)
+    error_message = "max_history must be null (unbounded) or a positive integer. Fractional values are rejected — $$$TASK_META_APPEND$$$ uses it as an integer ARRAY_SLICE bound."
   }
 }
 
