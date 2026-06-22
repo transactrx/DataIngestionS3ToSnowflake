@@ -243,6 +243,34 @@ module "import_invoices" {
 To run this mode **without** lineage, drop the `TASK_META` column from the table and remove the `$$$TASK_META_*$$$` 
 placeholders from the query.
 
+### Module inputs
+
+All inputs are defined with their descriptions in `variables.tf`; this table summarizes them and notes which mode 
+each applies to.
+
+| Input | Type | Default | Applies to | Description |
+|-------|------|---------|------------|-------------|
+| `database_name` | string | _(required)_ | all | Snowflake database. Must already exist. |
+| `schema_name` | string | _(required)_ | all | Snowflake schema. Must already exist. |
+| `stage_table_full_name` | string | _(required)_ | all | Fully-qualified stage/source table the stream is built on. |
+| `sql_import_query` | string | _(required)_ | all | The load query. Must reference `$$$STREAM$$$`, single statement, no trailing semicolon. |
+| `name` | string | `null` | Legacy, Module-owned | Base name for the stream/task; also the table name in Module-owned mode. Ignored in External mode. |
+| `columns` | list(object) | `null` | Module-owned | Column definitions for the table the module builds. Do **not** include `TASK_META`. Selects Module-owned mode. |
+| `existing_table` | object | `null` | External | The `snowflake_table` resource to target. Selects External mode. Mutually exclusive with `columns`. |
+| `table_comment` | string | `null` | Module-owned | Comment on the table the module creates. |
+| `change_tracking` | bool | `false` | Module-owned | Enables change tracking on the table the module creates. |
+| `max_history` | number | `5` | Module-owned, External | **History size** — max per-run entries kept in the `TASK_META` array per row (sliding window, oldest dropped). `null` = unbounded (watch the 16 MB row cap). |
+| `task_meta_column` | string | `"TASK_META"` | Module-owned, External | Name of the lineage ARRAY column the macros stamp (and that the module prepends in Module-owned mode). |
+| `merge_target_alias` | string | `"target"` | Module-owned, External | The alias your MERGE uses for the target table; `$$$TASK_META_APPEND$$$` references the existing array through it. |
+| `import_interval` | string | `*/10 * * * * America/New_York` | all | Cron schedule for the task. Mutually exclusive with `task_after`. |
+| `task_after` | list(string) | `null` | all | Predecessor task names; makes this a child task instead of scheduled. Mutually exclusive with `import_interval`. |
+| `load_historical_data` | bool | `true` | all | If true, the stream includes the rows already in the stage table on first run. |
+| `user_task_timeout_ms` | number | `3600000` | all | Task timeout in milliseconds (default 1 hour). |
+| `auto_retry_attempts` | number | `0` | all | Retries for a failed task (scheduled tasks only). |
+| `error_integration` | string | `SNS_NOTIFICATION` | all | Notification integration for failed tasks (scheduled tasks only). |
+| `stream_comment` | string | _(see variables.tf)_ | all | Comment on the stream resource. |
+| `task_comment` | string | _(see variables.tf)_ | all | Comment on the task resource. |
+
 ### Outputs
 
 Both `stream_name` and `task_name` are returned as fully-qualified Snowflake names (see `outputs.tf`).
