@@ -1,7 +1,7 @@
 # Importing data S3 to Snowflake #
 
 This project consists of two terraform modules.  One module that helps you import from an S3 bucket into a "Stage" or 
-"Raw" table in Snowflake (S3ToStageTable module).  The other module will help you import the data into your desire 
+"Raw" table in Snowflake (S3ToStageTable module).  The other module will help you import the data into your desired 
 tables based on your own provided query (ImportFromStageTable module).
 
 ## S3ToStageTable Module ##
@@ -10,17 +10,239 @@ defined in the outputs.tf file.  **This module assumes that the Database and Sch
 they don't**.
 
 ## ImportFromStageTable
+
 The inputs of this module are defined in the variables.tf.  The same assumption is true about the Database and the 
 schema, they must exist or the module will fail.
 
-The **stage_table_name** variable refers to the table where the external data was loaded into.  It is assumed to have a 
-JSON in one single Variant field.  If you are using the S3ToStageTable, you can leverage the output named 
+The **stage_table_full_name** variable refers to the table where the external data was loaded into.  It is assumed to 
+have a JSON in one single Variant field.  If you are using the S3ToStageTable, you can leverage the output named 
 **stage_table_name** or **stage_table_full_name** depending if you just need the simple name or the name including the 
-database and schema.  
+database and schema.
 
 The **sql_import_query** variable is the SQL query that you will need to provide in order to populate the desired 
-destination table.  A couple of things to keep in mind, these modules are not aware of your destination table so you 
-must either create the table or make sure it exists.  Another thing to note is that in your query, which usually will 
-be a MERGE query, your source will not be a table, but rather a Stream.  You don't need to worry about what the stream 
-is, except that it gives you only new data that has been added to the stage table rather than all the data each time.  
-On your query to refer to the stream just use the place holder $$$STREAM$$$.
+destination table.  A couple of things to keep in mind: your source will not be a table, but rather a Stream.  You 
+don't need to worry about what the stream is, except that it gives you only new data that has been added to the stage 
+table rather than all the data each time.  In your query, to refer to the stream just use the placeholder 
+`$$$STREAM$$$`.  The query is wrapped as a **single statement** — do not include a trailing semicolon, and it must 
+reference `$$$STREAM$$$`.
+
+### The three modes
+
+The module supports three call styles. **The mode is selected automatically from the inputs you pass — there is no 
+mode flag.**
+
+| Mode | You pass | Module creates | TASK_META lineage |
+|------|----------|----------------|-------------------|
+| **Legacy** | `name` only | stream + task (you own the table) | Not available |
+| **Module-owned** | `columns` (+ `name`) | table + stream + task | Required |
+| **External** | `existing_table` | stream + task (you own the table) | Optional |
+
+`columns` and `existing_table` are mutually exclusive — providing both fails at plan time.
+
+**Which mode should I use?**
+
+- **New implementations → Module-owned.** This is the preferred path going forward. Let the module own the table so 
+  it can manage the full lifecycle — table, stream, and task — and guarantee the `TASK_META` lineage column is present 
+  and stamped from day one.
+- **Existing legacy implementations → External.** This mode exists to make it easy to transition a table you already 
+  own onto TASK_META: keep your current table definition in place, add a `TASK_META ARRAY` column, point the module at 
+  the resource via `existing_table`, and add the lineage placeholders to your query. No need to migrate the table 
+  under module ownership.
+- **Legacy** remains for backwards compatibility only; prefer External when you want lineage without changing table 
+  ownership.
+
+#### What is TASK_META?
+
+TASK_META is an `ARRAY` column that records a compact, per-record history of the tasks that loaded it — **newest 
+first** (index 0 is the latest run). Each entry is an object with the run/task identifiers, the scheduled time, and 
+the run time. It lets you answer "how did this record get here, and which run loaded it?" directly on the row, instead 
+of reconstructing it from task history and timestamps.
+
+It is written during the normal load (no separate audit table, no Scripting block) using two placeholders in your 
+`sql_import_query`:
+
+- `$$$TASK_META_NEW$$$` — use in the **INSERT / NOT MATCHED** branch; seeds a one-element array for a brand-new row.
+- `$$$TASK_META_APPEND$$$` — use in the **UPDATE / MATCHED** branch; prepends the current run to the existing array.
+
+By default only the most recent **5** runs are retained per row (`max_history`, configurable; set to `null` for 
+unbounded — beware the 16 MB row cap on hot records). When you use `$$$TASK_META_APPEND$$$`, make sure 
+`merge_target_alias` matches the alias your MERGE uses for the target table (default `target`).
+
+#### Query placeholders (macros)
+
+The module rewrites your `sql_import_query` before creating the task, substituting these `$$$...$$$` macros. Use them 
+verbatim — the module fills in the real Snowflake objects/expressions.
+
+| Macro | Required? | Expands to |
+|-------|-----------|------------|
+| `$$$STREAM$$$` | **Always** | The fully-qualified name of the stream the module manages (`DB.SCHEMA.STREAM_<name>`). |
+| `$$$TASK_META_NEW$$$` | Mode-dependent | `ARRAY_CONSTRUCT(<run-metadata object>)` — a fresh one-element lineage array. |
+| `$$$TASK_META_APPEND$$$` | Mode-dependent | `ARRAY_PREPEND(<existing array, sliced to max_history-1>, <run-metadata object>)` — newest entry first. |
+
+**`$$$STREAM$$$`** is the heart of the import. Instead of reading the stage table directly, your query reads from a 
+Snowflake **stream** on that table, which the module creates and manages for you. A stream is a change-tracking object 
+that exposes only the rows added since the task last consumed it — so each run processes just the new data, not the 
+entire table every time. You don't manage the stream's name or lifecycle; you simply write `FROM $$$STREAM$$$` 
+wherever you'd normally read the source, and the module injects the correct fully-qualified stream name at plan time. 
+The query is required to reference `$$$STREAM$$$` at least once (validated in `variables.tf`).
+
+The `$$$TASK_META_*$$$` macros are required in Module-owned mode, optional in External mode (only if the table 
+declares the `TASK_META ARRAY` column), and forbidden in Legacy mode — see the per-mode sections below.
+
+---
+
+### Mode 1 — Legacy (you own the table)
+
+The original interface. You create and manage the destination table yourself; the module builds only the stream and 
+task. TASK_META is **not** available, and the `$$$TASK_META_*$$$` placeholders are rejected.
+
+```hcl
+module "import_customers" {
+  source = "./ImportFromStageTable"
+
+  name                  = "CUSTOMERS"
+  database_name         = "ANALYTICS"
+  schema_name           = "PUBLIC"
+  stage_table_full_name = "ANALYTICS.PUBLIC.STAGE_CUSTOMERS"
+
+  sql_import_query = <<-SQL
+    MERGE INTO ANALYTICS.PUBLIC.CUSTOMERS AS target
+    USING (
+      SELECT
+        v:id::NUMBER        AS id,
+        v:name::STRING      AS name,
+        v:email::STRING     AS email
+      FROM $$$STREAM$$$
+    ) AS source
+    ON target.id = source.id
+    WHEN MATCHED THEN UPDATE SET
+      target.name  = source.name,
+      target.email = source.email
+    WHEN NOT MATCHED THEN INSERT (id, name, email)
+      VALUES (source.id, source.name, source.email)
+  SQL
+}
+```
+
+---
+
+### Mode 2 — Module-owned (the module builds the table)
+
+**This is the preferred mode for brand-new implementations.** Pass `columns` and the module creates the table for you, automatically prepending the `TASK_META` lineage column as 
+the first column. **Do not** include `TASK_META` in `columns` — it is added for you, and declaring it yourself fails 
+with a duplicate-column error. Because the table is guaranteed to have the lineage column, the query **must** stamp it.
+
+```hcl
+module "import_orders" {
+  source = "./ImportFromStageTable"
+
+  name          = "ORDERS"
+  database_name = "ANALYTICS"
+  schema_name   = "PUBLIC"
+  table_comment = "Orders loaded from the S3 stage."
+
+  # Do NOT list TASK_META here — it is prepended automatically.
+  columns = [
+    { name = "ID",         type = "NUMBER",        nullable = false },
+    { name = "CUSTOMER_ID", type = "NUMBER" },
+    { name = "AMOUNT",     type = "NUMBER(12,2)" },
+    { name = "STATUS",     type = "STRING" },
+  ]
+
+  stage_table_full_name = "ANALYTICS.PUBLIC.STAGE_ORDERS"
+
+  # max_history defaults to 5; override if you need a longer/shorter window.
+  max_history        = 5
+  merge_target_alias = "target"
+
+  sql_import_query = <<-SQL
+    MERGE INTO ANALYTICS.PUBLIC.ORDERS AS target
+    USING (
+      SELECT
+        v:id::NUMBER          AS id,
+        v:customer_id::NUMBER AS customer_id,
+        v:amount::NUMBER      AS amount,
+        v:status::STRING      AS status
+      FROM $$$STREAM$$$
+    ) AS source
+    ON target.id = source.id
+    WHEN MATCHED THEN UPDATE SET
+      target.amount    = source.amount,
+      target.status    = source.status,
+      target.TASK_META = $$$TASK_META_APPEND$$$
+    WHEN NOT MATCHED THEN INSERT (id, customer_id, amount, status, TASK_META)
+      VALUES (source.id, source.customer_id, source.amount, source.status, $$$TASK_META_NEW$$$)
+  SQL
+}
+```
+
+---
+
+### Mode 3 — External (you own the table, module manages stream + task)
+
+Pass the `snowflake_table` resource itself via `existing_table`. The module manages only the stream and task and 
+derives all naming from the resource — do **not** also set `name` or `columns`. The table must live in the same 
+`database_name` / `schema_name` you give the module.
+
+TASK_META here is **opt-in**: add a `TASK_META ARRAY` column to your own table to use the placeholders, or omit both 
+the column and the placeholders for a plain load. The module validates this pairing at plan time.
+
+This mode exists to **easily transition existing legacy implementations onto TASK_META**: keep the table you already 
+own in your own Terraform, add the `TASK_META ARRAY` column, point the module at it, and the module takes over the 
+stream and task. For brand-new implementations, prefer Module-owned (Mode 2) instead.
+
+```hcl
+resource "snowflake_table" "invoices" {
+  database = "ANALYTICS"
+  schema   = "PUBLIC"
+  name     = "INVOICES"
+
+  column {
+    name = "ID"
+    type = "NUMBER"
+  }
+  column {
+    name = "TOTAL"
+    type = "NUMBER(12,2)"
+  }
+
+  # Add this column to opt into TASK_META lineage. Omit it for a plain load.
+  column {
+    name = "TASK_META"
+    type = "ARRAY"
+  }
+}
+
+module "import_invoices" {
+  source = "./ImportFromStageTable"
+
+  existing_table = snowflake_table.invoices
+
+  database_name         = "ANALYTICS"
+  schema_name           = "PUBLIC"
+  stage_table_full_name = "ANALYTICS.PUBLIC.STAGE_INVOICES"
+
+  sql_import_query = <<-SQL
+    MERGE INTO ANALYTICS.PUBLIC.INVOICES AS target
+    USING (
+      SELECT
+        v:id::NUMBER     AS id,
+        v:total::NUMBER  AS total
+      FROM $$$STREAM$$$
+    ) AS source
+    ON target.id = source.id
+    WHEN MATCHED THEN UPDATE SET
+      target.total     = source.total,
+      target.TASK_META = $$$TASK_META_APPEND$$$
+    WHEN NOT MATCHED THEN INSERT (id, total, TASK_META)
+      VALUES (source.id, source.total, $$$TASK_META_NEW$$$)
+  SQL
+}
+```
+
+To run this mode **without** lineage, drop the `TASK_META` column from the table and remove the `$$$TASK_META_*$$$` 
+placeholders from the query.
+
+### Outputs
+
+Both `stream_name` and `task_name` are returned as fully-qualified Snowflake names (see `outputs.tf`).
