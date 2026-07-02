@@ -132,47 +132,85 @@ module "import_customers" {
 the first column. **Do not** include `TASK_META` in `columns` — it is added for you, and declaring it yourself fails 
 with a duplicate-column error. Because the table is guaranteed to have the lineage column, the query **must** stamp it.
 
+This example is taken from a real reference-data export
+(`ras-datawarehouse/ras-datawarehouse-reference-data/dbExport_datadic_RULEDATA_COPAY_VENDOR.tf`).
+Note that it consumes the module straight from the git source, drives names through `locals`,
+dedups the change stream, and handles soft-deletes via an `OPERATIONTYPE` — patterns you will
+reuse across most module-owned tables.
+
 ```hcl
-module "import_orders" {
-  source = "./ImportFromStageTable"
+locals {
+  ruledata_copay_vendor_table = "RULEDATA_COPAY_VENDOR"
+}
 
-  name          = "ORDERS"
-  database_name = "ANALYTICS"
-  schema_name   = "PUBLIC"
-  table_comment = "Orders loaded from the S3 stage."
+module "RULEDATA_COPAY_VENDOR" {
+  source        = "git::https://github.com/transactrx/DataIngestionS3ToSnowflake.git//ImportFromStageTable?ref=main"
+  database_name = local.database_name
+  schema_name   = local.data_dictionary_schema_name
+  name          = local.ruledata_copay_vendor_table
+  table_comment = "copay_vendor data exported from external dbexport database."
 
-  # Do NOT list TASK_META here — it is prepended automatically.
+  # Module owns the table. Do NOT declare the TASK_META lineage column —
+  # the module auto-prepends it as the first column.
   columns = [
-    { name = "ID",         type = "NUMBER",        nullable = false },
-    { name = "CUSTOMER_ID", type = "NUMBER" },
-    { name = "AMOUNT",     type = "NUMBER(12,2)" },
-    { name = "STATUS",     type = "STRING" },
+    { name = "VERSION", type = "NUMBER(38,0)" },
+    { name = "ID", type = "STRING" },
+    { name = "NAME", type = "STRING" },
+    { name = "DESCRIPTION", type = "STRING" },
+    { name = "ACTION", type = "STRING" },
+    { name = "RECORD_STATUS", type = "STRING" },
+    { name = "START", type = "STRING" },
+    { name = "STOP", type = "STRING" },
+    # ... remaining source columns ...
   ]
 
-  stage_table_full_name = "ANALYTICS.PUBLIC.STAGE_ORDERS"
-
-  # max_history defaults to 5; override if you need a longer/shorter window.
-  max_history        = 5
-  merge_target_alias = "target"
-
-  sql_import_query = <<-SQL
-    MERGE INTO ANALYTICS.PUBLIC.ORDERS AS target
+  sql_import_query = <<SQL
+    MERGE INTO ${local.database_name}.${local.data_dictionary_schema_name}.${local.ruledata_copay_vendor_table} AS target
     USING (
-      SELECT
-        v:id::NUMBER          AS id,
-        v:customer_id::NUMBER AS customer_id,
-        v:amount::NUMBER      AS amount,
-        v:status::STRING      AS status
-      FROM $$$STREAM$$$
+      WITH ranked_data AS (
+        SELECT
+          ROW_NUMBER() OVER (
+            PARTITION BY DATA:eventPayload:id::varchar
+            ORDER BY DATA:eventPayload:db_export_record_version::numeric DESC
+          ) AS rnk,
+          DATA:eventPayload:db_export_record_version::numeric AS VERSION,
+          DATA:eventPayload:id::varchar AS ID,
+          DATA:eventPayload:name::varchar AS NAME,
+          DATA:eventPayload:description::varchar AS DESCRIPTION,
+          DATA:eventPayload:action::varchar AS ACTION,
+          DATA:eventPayload:record_status::varchar AS RECORD_STATUS,
+          DATA:eventPayload:start::varchar AS "START",
+          DATA:eventPayload:stop::varchar AS "STOP",
+          COALESCE(DATA:operationType::varchar, 'UPSERT') AS OPERATIONTYPE
+        FROM $$$STREAM$$$ t
+        WHERE t.DATA:eventType::varchar = 'dbexport-rule-data-copay-vendor'
+      )
+      SELECT * FROM ranked_data WHERE rnk = 1
     ) AS source
-    ON target.id = source.id
-    WHEN MATCHED THEN UPDATE SET
-      target.amount    = source.amount,
-      target.status    = source.status,
-      target.TASK_META = $$$TASK_META_APPEND$$$
-    WHEN NOT MATCHED THEN INSERT (id, customer_id, amount, status, TASK_META)
-      VALUES (source.id, source.customer_id, source.amount, source.status, $$$TASK_META_NEW$$$)
+    ON target.ID = source.ID
+    WHEN MATCHED AND source.OPERATIONTYPE = 'DELETE' THEN
+      DELETE
+    WHEN MATCHED AND source.OPERATIONTYPE != 'DELETE' THEN UPDATE SET
+      VERSION = source.VERSION,
+      NAME = source.NAME,
+      DESCRIPTION = source.DESCRIPTION,
+      ACTION = source.ACTION,
+      RECORD_STATUS = source.RECORD_STATUS,
+      "START" = source."START",
+      "STOP" = source."STOP",
+      TASK_META = $$$TASK_META_APPEND$$$
+    WHEN NOT MATCHED AND source.OPERATIONTYPE != 'DELETE' THEN INSERT (
+      VERSION, ID, NAME, DESCRIPTION, ACTION, RECORD_STATUS, "START", "STOP", TASK_META
+    ) VALUES (
+      source.VERSION, source.ID, source.NAME, source.DESCRIPTION, source.ACTION,
+      source.RECORD_STATUS, source."START", source."STOP", $$$TASK_META_NEW$$$
+    )
   SQL
+
+  merge_target_alias    = "target"
+  load_historical_data  = true
+  stage_table_full_name = local.events_stage_table_full_name
+  import_interval       = "25 * * * * UTC"
 }
 ```
 
