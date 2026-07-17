@@ -25,9 +25,20 @@
 # -----------------------------------------------------------------------------
 
 variable "name" {
-  description = "Table/implementation base name, used in every mode the module manages naming. In LEGACY mode (caller owns the table) it drives the stream/task object names (STREAM_<name>, STREAM_TASK_<name>). In MODULE-OWNED mode (var.columns set) it is ALSO the name of the table the module creates. Ignored in EXTERNAL mode, where the name is derived from var.existing_table."
+  description = "Target table name in MODULE-OWNED mode, and stream/task base name in LEGACY mode. Ignored in EXTERNAL mode, where the target table is derived from var.existing_table."
   type        = string
   default     = null
+}
+
+variable "import_name" {
+  description = "Optional stream/task naming base for MODULE-OWNED and EXTERNAL modes. Defaults to the target table name. Use this when multiple independent import tasks target one table or when importer object names should differ from the table name."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.import_name == null || length(trimspace(var.import_name)) > 0
+    error_message = "import_name must be null or a non-empty string."
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -111,6 +122,12 @@ variable "change_tracking" {
   description = "Whether change tracking is enabled on the target table (module-owned mode)."
   type        = bool
   default     = false
+}
+
+variable "cluster_by" {
+  description = "Clustering key expressions for the target table in MODULE-OWNED mode. Mirrors snowflake_table.cluster_by."
+  type        = list(string)
+  default     = null
 }
 
 variable "import_interval" {

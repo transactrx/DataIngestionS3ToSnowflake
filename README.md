@@ -149,6 +149,7 @@ module "RULEDATA_COPAY_VENDOR" {
   schema_name   = local.data_dictionary_schema_name
   name          = local.ruledata_copay_vendor_table
   table_comment = "copay_vendor data exported from external dbexport database."
+  cluster_by    = ["ID"]
 
   # Module owns the table. Do NOT declare the TASK_META lineage column —
   # the module auto-prepends it as the first column.
@@ -222,6 +223,10 @@ Pass the `snowflake_table` resource itself via `existing_table`. The module mana
 derives all naming from the resource — do **not** also set `name` or `columns`. The table must live in the same 
 `database_name` / `schema_name` you give the module.
 
+By default the stream and task names are derived from the target table. Set `import_name` when multiple independent
+imports target the same table; each importer then receives distinct `STREAM_<import_name>` and
+`STREAM_TASK_<import_name>` objects while still targeting `existing_table`.
+
 TASK_META here is **opt-in**: add a `TASK_META ARRAY` column to your own table to use the placeholders, or omit both 
 the column and the placeholders for a plain load. The module validates this pairing at plan time.
 
@@ -293,10 +298,12 @@ each applies to.
 | `stage_table_full_name` | string | _(required)_ | all | Fully-qualified stage/source table the stream is built on. |
 | `sql_import_query` | string | _(required)_ | all | The load query. Must reference `$$$STREAM$$$`, single statement, no trailing semicolon. |
 | `name` | string | `null` | Legacy, Module-owned | Base name for the stream/task; also the table name in Module-owned mode. Ignored in External mode. |
+| `import_name` | string | `null` | Module-owned, External | Optional stream/task naming base. Defaults to the target table name; use a distinct value for multiple importers targeting one table. |
 | `columns` | list(object) | `null` | Module-owned | Column definitions for the table the module builds. Do **not** include `TASK_META`. Selects Module-owned mode. |
 | `existing_table` | object | `null` | External | The `snowflake_table` resource to target. Selects External mode. Mutually exclusive with `columns`. |
 | `table_comment` | string | `null` | Module-owned | Comment on the table the module creates. |
 | `change_tracking` | bool | `false` | Module-owned | Enables change tracking on the table the module creates. |
+| `cluster_by` | list(string) | `null` | Module-owned | Clustering key expressions for the module-owned table. |
 | `max_history` | number | `5` | Module-owned, External | **History size** — max per-run entries kept in the `TASK_META` array per row (sliding window, oldest dropped). `null` = unbounded (watch the 16 MB row cap). |
 | `task_meta_column` | string | `"TASK_META"` | Module-owned, External | Name of the lineage ARRAY column the macros stamp (and that the module prepends in Module-owned mode). |
 | `merge_target_alias` | string | `"target"` | Module-owned, External | The alias your MERGE uses for the target table; `$$$TASK_META_APPEND$$$` references the existing array through it. |

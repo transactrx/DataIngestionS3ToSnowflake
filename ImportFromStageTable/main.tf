@@ -26,9 +26,14 @@ locals {
     local.is_external ? try(var.existing_table.name, null) : var.name
   )
 
-  stream_name      = upper("stream_${local.target_table_name}")
+  # Module-owned and external modes may run more than one independent importer
+  # against the same target table. Keep table identity separate from the naming
+  # base used for each importer's stream and task.
+  import_name = coalesce(var.import_name, local.target_table_name)
+
+  stream_name      = upper("stream_${local.import_name}")
   stream_name_full = "${var.database_name}.${var.schema_name}.${local.stream_name}"
-  stream_task_name = upper("stream_task_${local.target_table_name}")
+  stream_task_name = upper("stream_task_${local.import_name}")
 
   task_meta_column = upper(var.task_meta_column)
 
@@ -71,6 +76,7 @@ resource "snowflake_table" "this" {
   name            = local.target_table_name
   comment         = var.table_comment
   change_tracking = var.change_tracking
+  cluster_by      = var.cluster_by
 
   dynamic "column" {
     for_each = local.all_columns
@@ -224,6 +230,21 @@ resource "snowflake_task" "stream_task" {
     precondition {
       condition     = length(trimspace(coalesce(local.target_table_name, ""))) > 0
       error_message = "Could not determine the table/stream/task base name. Set var.name (legacy or module-owned mode), or var.existing_table (external mode)."
+    }
+
+    precondition {
+      condition     = length(trimspace(coalesce(local.import_name, ""))) > 0
+      error_message = "Could not determine the stream/task naming base. Set var.name, var.existing_table, or var.import_name."
+    }
+
+    precondition {
+      condition     = !local.is_legacy || var.import_name == null
+      error_message = "import_name is supported in module-owned and external modes only. In legacy mode, use var.name as the stream/task naming base."
+    }
+
+    precondition {
+      condition     = local.is_module_owned || var.cluster_by == null
+      error_message = "cluster_by applies only in module-owned mode (var.columns set). Configure clustering on the caller-owned table in external or legacy mode."
     }
 
     # Module-owned mode guarantees the TASK_META column exists, so the query
