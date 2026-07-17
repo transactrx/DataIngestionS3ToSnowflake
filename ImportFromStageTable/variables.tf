@@ -36,7 +36,7 @@ variable "import_name" {
   default     = null
 
   validation {
-    condition     = var.import_name == null || length(trimspace(var.import_name)) > 0
+    condition     = var.import_name == null ? true : length(trimspace(var.import_name)) > 0
     error_message = "import_name must be null or a non-empty string."
   }
 }
