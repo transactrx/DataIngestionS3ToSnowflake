@@ -41,9 +41,19 @@ resource "snowflake_stage" "external_stage" {
   schema   = var.schema_name
   url      = "s3://${var.s3_bucket_name}/${var.s3_bucket_prefix}"
 
-  credentials = "AWS_KEY_ID='${var.aws_s3_account_key_id}' AWS_SECRET_KEY='${var.aws_s3_account_secret_key}'"
+  # Preferred: authenticate via a storage integration (IAM role trust, no static keys).
+  # Legacy: inline AWS keys - kept for backward compatibility, removed in v3.
+  storage_integration = var.storage_integration
+  credentials         = var.storage_integration == null ? "AWS_KEY_ID='${var.aws_s3_account_key_id}' AWS_SECRET_KEY='${var.aws_s3_account_secret_key}'" : null
 
   file_format = "FORMAT_NAME = ${var.database_name}.${var.schema_name}.${snowflake_file_format.ndjson_gz_file_format.name}"
+
+  lifecycle {
+    precondition {
+      condition     = (var.storage_integration != null) != (var.aws_s3_account_key_id != null && var.aws_s3_account_secret_key != null)
+      error_message = "Set exactly one auth method: storage_integration (preferred) OR aws_s3_account_key_id + aws_s3_account_secret_key."
+    }
+  }
 }
 
 resource "snowflake_table" "transactions_table" {

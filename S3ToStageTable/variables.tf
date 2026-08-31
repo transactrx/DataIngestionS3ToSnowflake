@@ -5,20 +5,28 @@ variable "name" {
 
 variable "data_load_interval" {
   description = "Interval to run the data_load_task."
-  type = string
-  default = "USING CRON 0 * * * *	America/New_York"
+  type        = string
+  default     = "USING CRON 0 * * * *	America/New_York"
 }
 
 variable "aws_s3_account_key_id" {
-  description = "The AWS Key ID for the S3 bucket access."
+  description = "DEPRECATED - prefer storage_integration. The AWS Key ID for the S3 bucket access."
   type        = string
   sensitive   = true
+  default     = null
 }
 
 variable "aws_s3_account_secret_key" {
-  description = "The AWS Secret Key for the S3 bucket access."
+  description = "DEPRECATED - prefer storage_integration. The AWS Secret Key for the S3 bucket access."
   type        = string
   sensitive   = true
+  default     = null
+}
+
+variable "storage_integration" {
+  description = "Name of an existing Snowflake storage integration to authenticate the external stage (preferred). When set, the deprecated aws_s3_account_key_id/aws_s3_account_secret_key vars must be omitted."
+  type        = string
+  default     = null
 }
 
 variable "s3_bucket_name" {
@@ -43,6 +51,6 @@ variable "schema_name" {
 
 variable "cluster_by" {
   description = "The field to cluster the table by"
-  type = list(string)
+  type        = list(string)
 }
 
