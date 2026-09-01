@@ -98,7 +98,11 @@ resource "snowflake_pipe" "snowpipe" {
 }
 
 resource "aws_s3_bucket_notification" "s3_notification" {
-  bucket = var.s3_bucket_name
+  # Bind to the caller-supplied aws.dest (the account that owns the bucket). Without this the
+  # resource silently used the module's default aws provider = whatever ambient credentials the
+  # job happened to have, and only worked while those were the bucket owner's.
+  provider = aws.dest
+  bucket   = var.s3_bucket_name
   queue {
     queue_arn = snowflake_pipe.snowpipe.notification_channel
     events    = ["s3:ObjectCreated:*"]
