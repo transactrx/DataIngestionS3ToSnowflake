@@ -2,7 +2,7 @@ terraform {
   required_providers {
     snowflake = {
       source  = "snowflakedb/snowflake"
-      version = ">= 0.99.0"
+      version = ">= 2.12.0"
     }
   }
 }
@@ -199,6 +199,12 @@ resource "snowflake_task" "stream_task" {
   user_task_timeout_ms     = var.user_task_timeout_ms
   comment                  = var.task_comment
   started                  = true
+
+  # Keep a persistent memory floor after Snowflake has learned the task's
+  # workload. Initial size alone is ignored once execution history exists.
+  # Matching the initial size also keeps newly created tasks within the floor.
+  user_task_managed_initial_warehouse_size = var.serverless_task_min_statement_size
+  serverless_task_min_statement_size       = var.serverless_task_min_statement_size
 
   allow_overlapping_execution = false
 

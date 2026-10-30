@@ -288,6 +288,15 @@ placeholders from the query.
 
 ### Module inputs
 
+`ImportFromStageTable` requires Snowflake provider **2.12.0 or later**. For tasks
+that exhaust memory on automatically selected compute, set
+`serverless_task_min_statement_size = "SMALL"` (or a larger supported size).
+This sets both the persistent minimum and the initial size. The minimum still
+applies after Snowflake has execution history; changing only the initial size
+does not resize an established task. Omitting the input preserves inherited
+Snowflake sizing. This setting applies to the individual task, including child
+tasks in a graph; it does not resize a shared warehouse or the entire graph.
+
 All inputs are defined with their descriptions in `variables.tf`; this table summarizes them and notes which mode 
 each applies to.
 
@@ -311,6 +320,7 @@ each applies to.
 | `task_after` | list(string) | `null` | all | Predecessor task names; makes this a child task instead of scheduled. Mutually exclusive with `import_interval`. |
 | `load_historical_data` | bool | `true` | all | If true, the stream includes the rows already in the stage table on first run. |
 | `user_task_timeout_ms` | number | `3600000` | all | Task timeout in milliseconds (default 1 hour). |
+| `serverless_task_min_statement_size` | string | `null` | all | Persistent minimum and initial serverless size: `XSMALL`, `SMALL`, `MEDIUM`, `LARGE`, `XLARGE`, or `XXLARGE`. `null` preserves inherited sizing. |
 | `auto_retry_attempts` | number | `0` | all | Retries for a failed task (scheduled tasks only). |
 | `error_integration` | string | `SNS_NOTIFICATION` | all | Notification integration for failed tasks (scheduled tasks only). |
 | `stream_comment` | string | _(see variables.tf)_ | all | Comment on the stream resource. |
