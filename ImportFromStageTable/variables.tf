@@ -252,6 +252,20 @@ variable "user_task_timeout_ms" {
   default     = 3600000
 }
 
+variable "serverless_task_min_statement_size" {
+  description = "Optional persistent minimum serverless compute size. Also sets the initial size to the same value for new tasks. Null preserves inherited Snowflake sizing. Requires Snowflake provider >= 2.12.0."
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.serverless_task_min_statement_size == null ? true : contains(
+      ["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "XXLARGE"],
+      var.serverless_task_min_statement_size
+    )
+    error_message = "serverless_task_min_statement_size must be null or one of XSMALL, SMALL, MEDIUM, LARGE, XLARGE, XXLARGE."
+  }
+}
+
 variable "auto_retry_attempts" {
   description = "The number of times to retry a task that fails. Defaults to 0"
   type        = number
