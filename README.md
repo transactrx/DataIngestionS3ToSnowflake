@@ -9,6 +9,19 @@ The inputs for the module are defined in the variables.tf file with their corres
 defined in the outputs.tf file.  **This module assumes that the Database and Schema already exist, and it will fail if 
 they don't**.
 
+The stage table has two columns: `DATA` (the NDJSON line as a VARIANT) and `INGESTED_TIMESTAMP`. Set
+`include_file_metadata = true` to also record where each row came from. Snowpipe fills three more columns while it
+loads:
+
+| Column | Type | Filled from |
+|--------|------|-------------|
+| `FILE_NAME` | `VARCHAR` | `METADATA$FILENAME` (the S3 key, relative to the stage) |
+| `FILE_ROW_NUMBER` | `NUMBER(38,0)` | `METADATA$FILE_ROW_NUMBER` |
+| `FILE_LAST_MODIFIED` | `TIMESTAMP_NTZ(9)` | `METADATA$FILE_LAST_MODIFIED` |
+
+The default (`false`) leaves the table and the pipe exactly as before. Turning it on for an existing instance
+recreates the pipe.
+
 ## ImportFromStageTable
 
 The inputs of this module are defined in the variables.tf.  The same assumption is true about the Database and the 

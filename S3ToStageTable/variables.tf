@@ -54,3 +54,8 @@ variable "cluster_by" {
   type        = list(string)
 }
 
+variable "include_file_metadata" {
+  description = "When true, the stage table also gets FILE_NAME, FILE_ROW_NUMBER and FILE_LAST_MODIFIED, filled by Snowpipe from METADATA$FILENAME, METADATA$FILE_ROW_NUMBER and METADATA$FILE_LAST_MODIFIED. Default false leaves the table and pipe exactly as before; turning it on for an existing instance recreates the pipe and alters the table."
+  type        = bool
+  default     = false
+}
