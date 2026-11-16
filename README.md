@@ -15,7 +15,7 @@ loads:
 
 | Column | Type | Filled from |
 |--------|------|-------------|
-| `FILE_NAME` | `VARCHAR` | `METADATA$FILENAME` (the S3 key, relative to the stage) |
+| `FILE_NAME` | `VARCHAR` | `METADATA$FILENAME` (the full S3 key, including the stage prefix) |
 | `FILE_ROW_NUMBER` | `NUMBER(38,0)` | `METADATA$FILE_ROW_NUMBER` |
 | `FILE_LAST_MODIFIED` | `TIMESTAMP_NTZ(9)` | `METADATA$FILE_LAST_MODIFIED` |
 
