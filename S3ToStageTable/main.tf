@@ -19,6 +19,16 @@ locals {
   import_stored_proc_name = upper("import_sp_${var.name}")
   data_load_task_name     = upper("data_load_task_${var.name}")
   file_format_name        = upper("NDJSON_GZ_FORMAT_${var.name}")
+
+  # Columns Snowpipe fills from the staged file (include_file_metadata). Name => [type, COPY source].
+  file_metadata_columns = var.include_file_metadata ? {
+    FILE_NAME          = ["VARCHAR", "METADATA$FILENAME"]
+    FILE_ROW_NUMBER    = ["NUMBER(38,0)", "METADATA$FILE_ROW_NUMBER"]
+    FILE_LAST_MODIFIED = ["TIMESTAMP_NTZ(9)", "METADATA$FILE_LAST_MODIFIED"]
+  } : {}
+  file_metadata_order = ["FILE_NAME", "FILE_ROW_NUMBER", "FILE_LAST_MODIFIED"]
+  copy_target_columns = join(", ", concat(["DATA"], [for c in local.file_metadata_order : c if contains(keys(local.file_metadata_columns), c)]))
+  copy_select_list    = join(", ", concat(["$1"], [for c in local.file_metadata_order : local.file_metadata_columns[c][1] if contains(keys(local.file_metadata_columns), c)]))
 }
 
 resource "snowflake_file_format" "ndjson_gz_file_format" {
@@ -74,6 +84,13 @@ resource "snowflake_table" "transactions_table" {
       expression = "CURRENT_TIMESTAMP()"
     }
   }
+  dynamic "column" {
+    for_each = [for c in local.file_metadata_order : c if contains(keys(local.file_metadata_columns), c)]
+    content {
+      name = column.value
+      type = local.file_metadata_columns[column.value][0]
+    }
+  }
   lifecycle {
     ignore_changes = [cluster_by]
   }
@@ -90,7 +107,7 @@ resource "snowflake_table" "transactions_table" {
 
 resource "snowflake_pipe" "snowpipe" {
   depends_on     = [snowflake_table.transactions_table, snowflake_stage.external_stage]
-  copy_statement = "COPY INTO ${snowflake_table.transactions_table.database}.${snowflake_table.transactions_table.schema}.${snowflake_table.transactions_table.name} (DATA) FROM (SELECT $1 FROM @${snowflake_stage.external_stage.database}.${snowflake_stage.external_stage.schema}.${snowflake_stage.external_stage.name})"
+  copy_statement = "COPY INTO ${snowflake_table.transactions_table.database}.${snowflake_table.transactions_table.schema}.${snowflake_table.transactions_table.name} (${local.copy_target_columns}) FROM (SELECT ${local.copy_select_list} FROM @${snowflake_stage.external_stage.database}.${snowflake_stage.external_stage.schema}.${snowflake_stage.external_stage.name})"
   database       = var.database_name
   name           = var.name
   schema         = var.schema_name
